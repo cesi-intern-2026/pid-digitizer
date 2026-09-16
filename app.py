@@ -619,6 +619,14 @@ st.caption("Deteksi simbol P&ID + ekstraksi tag number — sliding-window YOLO p
 
 with st.sidebar:
     st.header("Model")
+    # Download the model from Hugging Face if it is not already in this folder.
+    if not list(APP_DIR.glob("*.pt")):
+        from huggingface_hub import hf_hub_download
+        hf_hub_download(
+            repo_id="tdkdiketahui1945/best-pt-louise",   # <- change YOUR-NAME
+            filename="best.pt",
+            local_dir=str(APP_DIR),
+        )
     default_models = sorted(ROOT.glob("*.pt")) + sorted(APP_DIR.glob("*.pt"))
     default_models = [p for p in default_models if not p.name.startswith(".cache_")]
 
