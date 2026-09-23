@@ -326,6 +326,28 @@ def ocr_symbol_tag(reader, page_img, box, upscale=4, pad=6, min_conf=0.30,
 
 
 # =================================================================== RESOURCE
+# best.pt (~50 MB) tidak bisa diunggah lewat web GitHub (batas 25 MB), jadi
+# model disimpan di Hugging Face dan diunduh sekali saat app pertama dijalankan.
+# GANTI HF_REPO_ID dengan repo model milikmu, mis. "nanda/pid-model".
+HF_REPO_ID = "tdkdiketahui1945/best-pt-louise"
+HF_FILENAME = "best.pt"
+
+
+def _hf_token() -> str | None:
+    """Token hanya perlu bila repo model diset Private (Settings -> Secrets)."""
+    try:
+        return st.secrets["HF_TOKEN"]
+    except Exception:
+        return None
+
+
+@st.cache_resource(show_spinner="Mengunduh model dari Hugging Face…")
+def fetch_model_from_hub(repo_id: str, filename: str) -> str:
+    """Unduh model dari Hub; kembalikan path lokalnya. Di-cache HF, sekali saja."""
+    from huggingface_hub import hf_hub_download
+    return hf_hub_download(repo_id=repo_id, filename=filename, token=_hf_token())
+
+
 @st.cache_resource(show_spinner=False)
 def load_model(model_bytes: bytes | None, model_path: str | None):
     """Muat YOLO. Di-cache agar tidak reload tiap interaksi."""
@@ -621,6 +643,13 @@ with st.sidebar:
     st.header("Model")
     default_models = sorted(ROOT.glob("*.pt")) + sorted(APP_DIR.glob("*.pt"))
     default_models = [p for p in default_models if not p.name.startswith(".cache_")]
+
+    # Tidak ada .pt di folder (kasus deploy) -> ambil dari Hugging Face.
+    if not default_models and not HF_REPO_ID.startswith("GANTI-"):
+        try:
+            default_models = [Path(fetch_model_from_hub(HF_REPO_ID, HF_FILENAME))]
+        except Exception as e:
+            st.error(f"Gagal mengunduh model dari Hugging Face: {e}")
 
     src = st.radio("Sumber model", ["File di folder project", "Upload .pt"],
                    index=0 if default_models else 1)
