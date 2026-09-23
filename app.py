@@ -619,14 +619,6 @@ st.caption("Deteksi simbol P&ID + ekstraksi tag number — sliding-window YOLO p
 
 with st.sidebar:
     st.header("Model")
-    # Download the model from Hugging Face if it is not already in this folder.
-    if not list(APP_DIR.glob("*.pt")):
-        from huggingface_hub import hf_hub_download
-        hf_hub_download(
-            repo_id="tdkdiketahui1945/best-pt-louise",   # <- change YOUR-NAME
-            filename="best.pt",
-            local_dir=str(APP_DIR),
-        )
     default_models = sorted(ROOT.glob("*.pt")) + sorted(APP_DIR.glob("*.pt"))
     default_models = [p for p in default_models if not p.name.startswith(".cache_")]
 
@@ -662,7 +654,10 @@ with st.sidebar:
 
     st.divider()
     st.header("Ekstraksi tag (OCR)")
-    do_ocr = st.checkbox("Aktifkan OCR tag", value=True)
+    # Default OFF di Streamlit Community Cloud: RAM hanya 1 GB, dan EasyOCR
+    # adalah pemakai memori terbesar. Deteksi simbol tetap jalan tanpa ini;
+    # hanya kolom tag_number yang kosong. Centang manual bila butuh tag.
+    do_ocr = st.checkbox("Aktifkan OCR tag", value=False)
     upscale = st.slider("Upscale crop", 1, 8, 4, 1,
                         help="Kode instrumen (baris tengah bubble) kecil — "
                              "perbesaran membuatnya terbaca.")
